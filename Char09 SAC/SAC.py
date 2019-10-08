@@ -15,8 +15,9 @@ import torch.optim as optim
 from torch.distributions import Normal
 from torch.autograd import grad
 from torch.utils.data.sampler import BatchSampler, SubsetRandomSampler
-from tensorboardX import SummaryWriter
-
+# from tensorboardX import SummaryWriter
+from torch.utils.tensorboard import SummaryWriter
+import gym_Vibration
 
 '''
 Implementation of soft actor critic
@@ -24,11 +25,17 @@ Original paper: https://arxiv.org/abs/1801.01290
 Not the author's implementation !
 '''
 
+
+torch.cuda.current_device()
+torch.cuda._initialized = True
+
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
+# device = 'cpu'
+
 parser = argparse.ArgumentParser()
 
 
-parser.add_argument("--env_name", default="Pendulum-v0")  # OpenAI gym environment name
+parser.add_argument("--env_name", default="VibrationEnv-v0")  # OpenAI gym environment name  VibrationEnv  Pendulum
 parser.add_argument('--tau',  default=0.005, type=float) # target smoothing coefficient
 parser.add_argument('--target_update_interval', default=1, type=int)
 parser.add_argument('--gradient_steps', default=1, type=int)
@@ -51,6 +58,7 @@ parser.add_argument('--log_interval', default=2000, type=int) #
 parser.add_argument('--load', default=False, type=bool) # load model
 args = parser.parse_args()
 
+'''
 class NormalizedActions(gym.ActionWrapper):
     def _action(self, action):
         low = self.action_space.low
@@ -69,6 +77,29 @@ class NormalizedActions(gym.ActionWrapper):
         action = np.clip(action, low, high)
 
         return action
+'''
+
+class NormalizedActions(gym.ActionWrapper):
+    def action(self, a):
+        l = self.action_space.low
+        h = self.action_space.high
+
+        a = l + (a + 1.0) * 0.5 * (h - l)
+        a = np.clip(a, l, h)
+
+        return a
+
+    def reverse_action(self, a):
+        l = self.action_space.low
+        h = self.action_space.high
+
+        a = 2 * (a -l)/(h - l) -1 
+        a = np.clip(a, l, h)
+
+        return a
+
+
+
 
 
 env = NormalizedActions(gym.make(args.env_name))
@@ -151,7 +182,8 @@ class SAC():
         self.Q_optimizer = optim.Adam(self.Q_net.parameters(), lr=args.learning_rate)
         self.num_transition = 0 # pointer of replay buffer
         self.num_training = 1
-        self.writer = SummaryWriter('./exp-SAC')
+        # self.writer = SummaryWriter('./exp-SAC')
+        self.writer = SummaryWriter()
 
         self.value_criterion = nn.MSELoss()
         self.Q_criterion = nn.MSELoss()
@@ -282,8 +314,9 @@ def main():
     ep_r = 0
     for i in range(args.iteration):
         state = env.reset()
-        for t in range(200):
+        for t in range(200):  # 200
             action = agent.select_action(state)
+            # print(type(action))
             next_state, reward, done, info = env.step(np.float32(action))
             ep_r += reward
             if args.render: env.render()
@@ -293,7 +326,7 @@ def main():
                 agent.update()
 
             state = next_state
-            if done or t == 199:
+            if done or t == 199:  # 199
                 if i % 10 == 0:
                     print("Ep_i {}, the ep_r is {}, the t is {}".format(i, ep_r, t))
                 break
