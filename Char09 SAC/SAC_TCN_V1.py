@@ -221,8 +221,8 @@ class SAC():
 
     def select_action(self, state):
         state = torch.FloatTensor(state).to(device)
-        state = state.reshape(-1, input_channels, state_seq_len)
-        mu, log_sigma = self.policy_net(state)
+        # state = state.reshape(-1, input_channels, state_seq_len)
+        mu, log_sigma = self.policy_net(state.reshape(-1, input_channels, state_seq_len))
         sigma = torch.exp(log_sigma)
         dist = Normal(mu, sigma)
         z = dist.sample()
@@ -237,7 +237,7 @@ class SAC():
 
     def get_action_log_prob(self, state):
 
-        batch_mu, batch_log_sigma = self.policy_net(state)
+        batch_mu, batch_log_sigma = self.policy_net(state.reshape(-1, input_channels, state_seq_len))
         batch_sigma = torch.exp(batch_log_sigma)
         dist = Normal(batch_mu, batch_sigma)
         z = dist.sample()
@@ -264,13 +264,19 @@ class SAC():
             bn_s_ = s_[index]
             bn_d = d[index].reshape(-1, 1)
 
-            bn_s = bn_s.reshape(-1, input_channels, state_seq_len)
+            # print(bn_s.size())
+            # input()
+
+            # bn_s = bn_s.reshape(-1, input_channels, state_seq_len)
 
             target_value = self.Target_value_net(bn_s_)
             next_q_value = bn_r + (1 - bn_d) * args.gamma * target_value
 
             excepted_value = self.value_net(bn_s)
             excepted_Q = self.Q_net(bn_s, bn_a)
+
+            # print(bn_s.size())
+            # input()
 
             sample_action, log_prob, z, batch_mu, batch_log_sigma = self.get_action_log_prob(bn_s)
             excepted_new_Q = self.Q_net(bn_s, sample_action)
@@ -420,14 +426,15 @@ def main():
                 state = next_state
                 if done or t == 199:  # 199
                     if i % 10 == 0:
-                        print("Ep_i {}, the ep_r is {}, the t is {}".format(i, ep_r, t))
+                        print("Ep_i {}, the ep_r is {}, the t is {}, NoiseAmplitude: {}, VibrationAmplitude: {}".format(i, ep_r, t, info['NoiseAmplitude'], info['VibrationAmplitude'] ))
                     break
             if i % args.log_interval == 0:
                 agent.save()
-            agent.writer.add_scalar('ep_r', ep_r, global_step=i)
+            # agent.writer.add_scalar('ep_r', ep_r, global_step=i)
+            agent.writer.add_scalar('Rewards/ep_r', ep_r, global_step=i)
             ep_r = 0
-            agent.writer.add_scalar('Amplitude/NoiseAmplitude', info['NoiseAmplitude'], global_step=i)
-            agent.writer.add_scalar('Amplitude/VibrationAmplitude', info['VibrationAmplitude'], global_step=i)
+            agent.writer.add_scalar('Rewards/NoiseAmplitude', info['NoiseAmplitude'], global_step=i)
+            agent.writer.add_scalar('Rewards/VibrationAmplitude', info['VibrationAmplitude'], global_step=i)
             
 
 
