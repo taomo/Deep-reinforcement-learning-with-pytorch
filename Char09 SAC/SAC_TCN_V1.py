@@ -58,6 +58,10 @@ parser.add_argument('--activation', default='Relu', type=str)
 parser.add_argument('--render', default=False, type=bool) # show UI or not
 parser.add_argument('--log_interval', default=2000, type=int) #
 parser.add_argument('--load', default=False, type=bool) # load model
+
+# optional parameters
+
+
 args = parser.parse_args()
 
 '''
@@ -117,10 +121,23 @@ max_action = float(env.action_space.high[0])
 min_Val = torch.tensor(1e-7).float()
 Transition = namedtuple('Transition', ['s', 'a', 'r', 's_', 'd'])
 
+
+input_channels = state_dim
+output_channels = action_dim
+num_channels = [30, 30, 30, 30, 30, 30, 30, 30]
+kernel_size = 7
+state_batch = 1
+state_seq_len = 1
+
+dropout = 0
+from model import TCN
+from TCN.tcn import TemporalConvNet
+
 class Actor(nn.Module):
     def __init__(self, state_dim, min_log_std=-20, max_log_std=2):
         super(Actor, self).__init__()
-        self.fc1 = nn.Linear(state_dim, 256)
+        self.tcn = TemporalConvNet(input_channels, num_channels, kernel_size=kernel_size, dropout=dropout)
+        self.fc1 = nn.Linear(num_channels[-1], 256)
         self.fc2 = nn.Linear(256, 256)
         self.mu_head = nn.Linear(256, 1)
         self.log_std_head = nn.Linear(256, 1)
@@ -130,7 +147,14 @@ class Actor(nn.Module):
         self.max_log_std = max_log_std
 
     def forward(self, x):
+        x = self.tcn(x)
+        x = x.transpose(1, 2)
+        # print(x.size())
+        # input()
+        # exit()
+        # x = x.reshape(-1, 256)  # 需要调整
         x = F.relu(self.fc1(x))
+
         x = F.relu(self.fc2(x))
         mu = self.mu_head(x)
         log_std_head = F.relu(self.log_std_head(x))
@@ -197,6 +221,7 @@ class SAC():
 
     def select_action(self, state):
         state = torch.FloatTensor(state).to(device)
+        state = state.reshape(-1, input_channels, state_seq_len)
         mu, log_sigma = self.policy_net(state)
         sigma = torch.exp(log_sigma)
         dist = Normal(mu, sigma)
@@ -239,6 +264,7 @@ class SAC():
             bn_s_ = s_[index]
             bn_d = d[index].reshape(-1, 1)
 
+            bn_s = bn_s.reshape(-1, input_channels, state_seq_len)
 
             target_value = self.Target_value_net(bn_s_)
             next_q_value = bn_r + (1 - bn_d) * args.gamma * target_value
@@ -400,7 +426,8 @@ def main():
                 agent.save()
             agent.writer.add_scalar('ep_r', ep_r, global_step=i)
             ep_r = 0
-            agent.writer.add_scalar('NoiseAmplitude', info['NoiseAmplitude'], global_step=i)
+            agent.writer.add_scalar('Amplitude/NoiseAmplitude', info['NoiseAmplitude'], global_step=i)
+            agent.writer.add_scalar('Amplitude/VibrationAmplitude', info['VibrationAmplitude'], global_step=i)
             
 
 
