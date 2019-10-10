@@ -10,8 +10,8 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 from torch.distributions import Normal
-from tensorboardX import SummaryWriter
-
+from torch.utils.tensorboard import SummaryWriter
+import gym_Vibration
 '''
 Implementation of Deep Deterministic Policy Gradients (DDPG) with pytorch 
 riginal paper: https://arxiv.org/abs/1509.02971
@@ -23,7 +23,7 @@ parser.add_argument('--mode', default='train', type=str) # mode = 'train' or 'te
 # OpenAI gym environment name, # ['BipedalWalker-v2', 'Pendulum-v0'] or any continuous environment
 # Note that DDPG is feasible about hyper-parameters.
 # You should fine-tuning if you change to another environment.
-parser.add_argument("--env_name", default="Pendulum-v0")
+parser.add_argument("--env_name", default="VibrationEnv-v0")   # VibrationEnv  Pendulum
 parser.add_argument('--tau',  default=0.005, type=float) # target smoothing coefficient
 parser.add_argument('--target_update_interval', default=1, type=int)
 parser.add_argument('--test_iteration', default=10, type=int)
@@ -48,9 +48,37 @@ parser.add_argument('--print_log', default=5, type=int)
 parser.add_argument('--update_iteration', default=10, type=int)
 args = parser.parse_args()
 
+torch.cuda.current_device()
+torch.cuda._initialized = True
+
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 script_name = os.path.basename(__file__)
-env = gym.make(args.env_name).unwrapped
+# env = gym.make(args.env_name).unwrapped
+
+class NormalizedActions(gym.ActionWrapper):
+    def action(self, a):
+        l = self.action_space.low
+        h = self.action_space.high
+
+        a = l + (a + 1.0) * 0.5 * (h - l)
+        a = np.clip(a, l, h)
+
+        return a
+
+    def reverse_action(self, a):
+        l = self.action_space.low
+        h = self.action_space.high
+
+        a = 2 * (a -l)/(h - l) -1 
+        a = np.clip(a, l, h)
+
+        return a
+
+
+env = NormalizedActions(gym.make(args.env_name)).unwrapped
+
+
+
 
 if args.seed:
     env.seed(args.random_seed)
@@ -62,7 +90,8 @@ action_dim = env.action_space.shape[0]
 max_action = float(env.action_space.high[0])
 min_Val = torch.tensor(1e-7).float().to(device) # min value
 
-directory = './exp' + script_name + args.env_name +'./'
+# directory = './exp' + script_name + args.env_name +'./'
+directory = './runs'
 
 class Replay_buffer():
     '''
@@ -141,7 +170,7 @@ class DDPG(object):
         self.critic_target.load_state_dict(self.critic.state_dict())
         self.critic_optimizer = optim.Adam(self.critic.parameters(), args.learning_rate)
         self.replay_buffer = Replay_buffer()
-        self.writer = SummaryWriter(directory)
+        self.writer = SummaryWriter()  # directory
         self.num_critic_update_iteration = 0
         self.num_actor_update_iteration = 0
         self.num_training = 0
@@ -250,9 +279,15 @@ def main():
 
                 state = next_state
                 if done or t >= args.max_length_of_trajectory:
-                    agent.writer.add_scalar('ep_r', ep_r, global_step=i)
+                    agent.writer.add_scalar('Rewards/ep_r', ep_r, global_step=i)
+                    if args.env_name == 'VibrationEnv-v0':
+                        agent.writer.add_scalar('Rewards/NoiseAmplitude', info['NoiseAmplitude'], global_step=i)
+                        agent.writer.add_scalar('Rewards/VibrationAmplitude', info['VibrationAmplitude'], global_step=i)
                     if i % args.print_log == 0:
-                        print("Ep_i \t{}, the ep_r is \t{:0.2f}, the step is \t{}".format(i, ep_r, t))
+                        if args.env_name == 'VibrationEnv-v0':
+                            print("Ep_i {}, the ep_r is {}, the t is {}, NoiseAmplitude: {}, VibrationAmplitude: {}".format(i, ep_r, t, info['NoiseAmplitude'], info['VibrationAmplitude'] ))
+                        else:
+                            print("Ep_i {}, the ep_r is {}, the t is {}".format(i, ep_r, t ))
                     ep_r = 0
                     break
 
