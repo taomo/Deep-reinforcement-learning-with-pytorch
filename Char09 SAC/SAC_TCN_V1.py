@@ -258,6 +258,8 @@ class SAC():
         s_ = torch.tensor([t.s_ for t in self.replay_buffer]).float().to(device)
         d = torch.tensor([t.d for t in self.replay_buffer]).float().to(device)
 
+        # A = (R - np.mean(R)) / np.std(R)  # 归一化奖励
+
         for _ in range(args.gradient_steps):
             #for index in BatchSampler(SubsetRandomSampler(range(args.capacity)), args.batch_size, False):
             index = np.random.choice(range(args.capacity), args.batch_size, replace=False)
