@@ -35,7 +35,7 @@ device = 'cuda' if torch.cuda.is_available() else 'cpu'
 parser = argparse.ArgumentParser()
 
 parser.add_argument('--mode', default='train', type=str) # mode = 'train' or 'test'
-parser.add_argument("--env_name", default="Pendulum-v0")  # OpenAI gym environment name  VibrationEnv  Pendulum
+parser.add_argument("--env_name", default="VibrationEnv-v0")  # OpenAI gym environment name  VibrationEnv  Pendulum
 parser.add_argument('--tau',  default=0.005, type=float) # target smoothing coefficient
 parser.add_argument('--target_update_interval', default=1, type=int)
 parser.add_argument('--gradient_steps', default=1, type=int)
@@ -433,19 +433,20 @@ def main():
                 state = next_state
                 if done or t == 199:  # 199
                     if i % 10 == 0:
-                        # print("Ep_i {}, the ep_r is {}, the t is {}, NoiseAmplitude: {}, VibrationAmplitude: {}".format(i, ep_r, t, info['NoiseAmplitude'], info['VibrationAmplitude'] ))
-                        print("Ep_i {}, the ep_r is {}, the t is {}".format(i, ep_r, t ))
+                        if args.env_name == 'VibrationEnv-v0' :
+                            print("Ep_i {}, the ep_r is {}, the t is {}, NoiseAmplitude: {}, VibrationAmplitude: {}".format(i, ep_r, t, info['NoiseAmplitude'], info['VibrationAmplitude'] ))
+                        else:
+                            print("Ep_i {}, the ep_r is {}, the t is {}".format(i, ep_r, t ))
                     break
             if i % args.log_interval == 0:
                 agent.save()
             # agent.writer.add_scalar('ep_r', ep_r, global_step=i)
             agent.writer.add_scalar('Rewards/ep_r', ep_r, global_step=i)
             ep_r = 0
-            # agent.writer.add_scalar('Rewards/NoiseAmplitude', info['NoiseAmplitude'], global_step=i)
-            # agent.writer.add_scalar('Rewards/VibrationAmplitude', info['VibrationAmplitude'], global_step=i)
+            if args.env_name == 'VibrationEnv-v0' :
+                agent.writer.add_scalar('Rewards/NoiseAmplitude', info['NoiseAmplitude'], global_step=i)
+                agent.writer.add_scalar('Rewards/VibrationAmplitude', info['VibrationAmplitude'], global_step=i)
             
-
-
 
 
 
