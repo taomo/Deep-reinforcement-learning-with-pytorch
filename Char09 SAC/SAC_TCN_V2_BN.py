@@ -419,7 +419,7 @@ def main():
         # ep_r = 0
         for i in range(args.iteration):
             state = env.reset()
-            for t in range(200):  # 200
+            for t in range(1000):  # 200
                 action = agent.select_action(state)
                 # print(type(action))
                 next_state, reward, done, info = env.step(np.float32(action))
@@ -431,7 +431,7 @@ def main():
                     agent.update()
 
                 state = next_state
-                if done or t == 199:  # 199
+                if done or t == 999:  # 199
                     if i % 10 == 0:
                         if args.env_name == 'VibrationEnv-v0' :
                             print("Ep_i {}, the ep_r is {}, the t is {}, NoiseAmplitude: {}, VibrationAmplitude: {}".format(i, ep_r, t, info['NoiseAmplitude'], info['VibrationAmplitude'] ))
