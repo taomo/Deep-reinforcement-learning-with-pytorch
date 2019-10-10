@@ -254,11 +254,16 @@ class SAC():
             print("Training ... {} ".format(self.num_training))
         s = torch.tensor([t.s for t in self.replay_buffer]).float().to(device)
         a = torch.tensor([t.a for t in self.replay_buffer]).to(device)
-        r = torch.tensor([t.r for t in self.replay_buffer]).to(device)
+        # r = torch.tensor([t.r for t in self.replay_buffer]).to(device)
         s_ = torch.tensor([t.s_ for t in self.replay_buffer]).float().to(device)
         d = torch.tensor([t.d for t in self.replay_buffer]).float().to(device)
 
         # A = (R - np.mean(R)) / np.std(R)  # 归一化奖励
+        r = [t.r for t in self.replay_buffer]
+        r = (r - np.mean(r)) / np.std(r)  # 归一化奖励
+        r = torch.tensor(r).to(device)
+
+
 
         for _ in range(args.gradient_steps):
             #for index in BatchSampler(SubsetRandomSampler(range(args.capacity)), args.batch_size, False):

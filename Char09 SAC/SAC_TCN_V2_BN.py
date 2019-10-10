@@ -258,11 +258,14 @@ class SAC():
             print("Training ... {} ".format(self.num_training))
         s = torch.tensor([t.s for t in self.replay_buffer]).float().to(device)
         a = torch.tensor([t.a for t in self.replay_buffer]).to(device)
-        r = torch.tensor([t.r for t in self.replay_buffer]).to(device)
+        # r = torch.tensor([t.r for t in self.replay_buffer]).to(device)
         s_ = torch.tensor([t.s_ for t in self.replay_buffer]).float().to(device)
         d = torch.tensor([t.d for t in self.replay_buffer]).float().to(device)
 
-        r = (r - np.mean(r)) / np.std(r)  # 归一化奖励 taomo
+        # A = (R - np.mean(R)) / np.std(R)  # 归一化奖励
+        r = [t.r for t in self.replay_buffer]
+        r = (r - np.mean(r)) / np.std(r)  # 归一化奖励
+        r = torch.tensor(r).float().to(device)
 
         for _ in range(args.gradient_steps):
             #for index in BatchSampler(SubsetRandomSampler(range(args.capacity)), args.batch_size, False):
@@ -422,7 +425,7 @@ def main():
         # ep_r = 0
         for i in range(args.iteration):
             state = env.reset()
-            for t in range(1000):  # 200
+            for t in range(500):  # 200
                 action = agent.select_action(state)
                 # print(type(action))
                 next_state, reward, done, info = env.step(np.float32(action))
@@ -434,7 +437,7 @@ def main():
                     agent.update()
 
                 state = next_state
-                if done or t == 999:  # 199
+                if done or t == 499:  # 199
                     if i % 10 == 0:
                         if args.env_name == 'VibrationEnv-v0':
                             print("Ep_i {}, the ep_r is {}, the t is {}, NoiseAmplitude: {}, VibrationAmplitude: {}".format(i, ep_r, t, info['NoiseAmplitude'], info['VibrationAmplitude'] ))
