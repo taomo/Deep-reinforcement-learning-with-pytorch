@@ -1,3 +1,5 @@
+print('hello world')
+
 import argparse
 import pickle
 from collections import namedtuple
@@ -5,6 +7,8 @@ from itertools import count
 
 import os
 import numpy as np
+
+
 
 
 import gym
@@ -124,8 +128,7 @@ Transition = namedtuple('Transition', ['s', 'a', 'r', 's_', 'd'])
 
 input_channels = state_dim
 output_channels = action_dim
-# num_channels = [30, 30, 30, 30, 30, 30, 30, 30]
-num_channels = [256, 256]
+num_channels = [30, 30, 30, 30, 30, 30, 30, 30]
 kernel_size = 7
 state_batch = 1
 state_seq_len = 1
@@ -261,8 +264,6 @@ class SAC():
         r = torch.tensor([t.r for t in self.replay_buffer]).to(device)
         s_ = torch.tensor([t.s_ for t in self.replay_buffer]).float().to(device)
         d = torch.tensor([t.d for t in self.replay_buffer]).float().to(device)
-
-        r = (r - np.mean(r)) / np.std(r)  # 归一化奖励 taomo
 
         for _ in range(args.gradient_steps):
             #for index in BatchSampler(SubsetRandomSampler(range(args.capacity)), args.batch_size, False):
@@ -436,7 +437,7 @@ def main():
                 state = next_state
                 if done or t == 999:  # 199
                     if i % 10 == 0:
-                        if args.env_name == 'VibrationEnv-v0':
+                        if args.env_name == 'VibrationEnv-v0' :
                             print("Ep_i {}, the ep_r is {}, the t is {}, NoiseAmplitude: {}, VibrationAmplitude: {}".format(i, ep_r, t, info['NoiseAmplitude'], info['VibrationAmplitude'] ))
                         else:
                             print("Ep_i {}, the ep_r is {}, the t is {}".format(i, ep_r, t ))
@@ -446,10 +447,11 @@ def main():
             # agent.writer.add_scalar('ep_r', ep_r, global_step=i)
             agent.writer.add_scalar('Rewards/ep_r', ep_r, global_step=i)
             ep_r = 0
-            if args.env_name == 'VibrationEnv-v0':
+            if args.env_name == 'VibrationEnv-v0' :
                 agent.writer.add_scalar('Rewards/NoiseAmplitude', info['NoiseAmplitude'], global_step=i)
                 agent.writer.add_scalar('Rewards/VibrationAmplitude', info['VibrationAmplitude'], global_step=i)
             
+
 
 
 if __name__ == '__main__':
