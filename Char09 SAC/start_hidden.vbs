@@ -1,2 +1,1 @@
-Set ws = CreateObject("Wscript.Shell")
-ws.run "cmd /c start_show.bat",0
+CreateObject("Shell.Application").ShellExecute "start_show.bat", , , "runas", 0

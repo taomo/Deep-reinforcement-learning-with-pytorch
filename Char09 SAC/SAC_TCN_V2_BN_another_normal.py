@@ -262,12 +262,16 @@ class SAC():
         s_ = torch.tensor([t.s_ for t in self.replay_buffer]).float().to(device)
         d = torch.tensor([t.d for t in self.replay_buffer]).float().to(device)
 
-        # # A = (R - np.mean(R)) / np.std(R)  # 归一化奖励
+        # A = (R - np.mean(R)) / np.std(R)  # 归一化奖励
+
+        # r = [t.r for t in self.replay_buffer]
+        # r = (r - np.mean(r)) / np.std(r)  # 归一化奖励
+        # r = torch.tensor(r).float().to(device)
+
+
         r = [t.r for t in self.replay_buffer]
-        r = (r - np.mean(r)) / np.std(r)  # 归一化奖励
-        r = torch.tensor(r).float().to(device)
-
-
+        scaler = MinMaxScaler(feature_range=(0, 1))
+        r = scaler.fit_transform(r)  # 归一化奖励
 
 
         for _ in range(args.gradient_steps):
