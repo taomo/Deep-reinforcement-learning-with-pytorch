@@ -272,6 +272,7 @@ class SAC():
         r = [t.r for t in self.replay_buffer]
         scaler = MinMaxScaler(feature_range=(0, 1))
         r = scaler.fit_transform(r)  # 归一化奖励
+        r = torch.tensor(r).float().to(device)
 
 
         for _ in range(args.gradient_steps):
