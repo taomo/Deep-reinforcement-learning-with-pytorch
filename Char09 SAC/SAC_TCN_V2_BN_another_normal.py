@@ -18,7 +18,7 @@ from torch.utils.data.sampler import BatchSampler, SubsetRandomSampler
 # from tensorboardX import SummaryWriter
 from torch.utils.tensorboard import SummaryWriter
 import gym_Vibration
-
+from sklearn.preprocessing import LabelEncoder, MinMaxScaler
 '''
 Implementation of soft actor critic
 Original paper: https://arxiv.org/abs/1801.01290
