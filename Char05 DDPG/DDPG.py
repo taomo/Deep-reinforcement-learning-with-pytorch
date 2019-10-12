@@ -125,7 +125,7 @@ class Replay_buffer():
 
         return np.array(x), np.array(y), np.array(u), np.array(r).reshape(-1, 1), np.array(d).reshape(-1, 1)
 
-
+'''
 class Actor(nn.Module):
     def __init__(self, state_dim, action_dim, max_action):
         super(Actor, self).__init__()
@@ -141,7 +141,27 @@ class Actor(nn.Module):
         x = F.relu(self.l2(x))
         x = self.max_action * torch.tanh(self.l3(x))
         return x
+'''
 
+class Actor(nn.Module):
+    def __init__(self, state_dim, action_dim, max_action):
+        super(Actor, self).__init__()
+
+        self.l1 = nn.Linear(state_dim, 500)
+        self.l2 = nn.Linear(500, 400)
+        self.l3 = nn.Linear(400, 300)
+        self.l4 = nn.Linear(300, 300)
+        self.l5 = nn.Linear(300, action_dim)
+
+        self.max_action = max_action
+
+    def forward(self, x):
+        x = F.relu(self.l1(x))
+        x = F.relu(self.l2(x))
+        x = F.relu(self.l3(x))
+        x = F.relu(self.l4(x))
+        x = self.max_action * torch.tanh(self.l5(x))
+        return x
 
 class Critic(nn.Module):
     def __init__(self, state_dim, action_dim):
@@ -189,6 +209,14 @@ class DDPG(object):
             next_state = torch.FloatTensor(y).to(device)
             done = torch.FloatTensor(d).to(device)
             reward = torch.FloatTensor(r).to(device)
+
+            # from sklearn.preprocessing import LabelEncoder, MinMaxScaler
+            # scaler = MinMaxScaler(feature_range=(0, 1))
+            # reward = scaler.fit_transform(reward)  # 归一化奖励
+            # reward = torch.tensor(reward).float().to(device)
+
+
+
 
             # Compute the target Q value
             target_Q = self.critic_target(next_state, self.actor_target(next_state))
