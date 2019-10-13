@@ -41,7 +41,7 @@ parser.add_argument('--render', default=False, type=bool) # show UI or not
 parser.add_argument('--log_interval', default=50, type=int) #
 parser.add_argument('--load', default=False, type=bool) # load model
 parser.add_argument('--render_interval', default=100, type=int) # after render_interval, the env.render() will work
-parser.add_argument('--exploration_noise', default=0.1, type=float)
+parser.add_argument('--exploration_noise', default=0.5, type=float)  # 0.1
 parser.add_argument('--max_episode', default=100000, type=int) # num of games
 parser.add_argument('--max_length_of_trajectory', default=2000, type=int) # num of games
 parser.add_argument('--print_log', default=5, type=int)
@@ -125,7 +125,7 @@ class Replay_buffer():
 
         return np.array(x), np.array(y), np.array(u), np.array(r).reshape(-1, 1), np.array(d).reshape(-1, 1)
 
-
+'''
 class Actor(nn.Module):
     def __init__(self, state_dim, action_dim, max_action):
         super(Actor, self).__init__()
@@ -141,8 +141,8 @@ class Actor(nn.Module):
         x = F.relu(self.l2(x))
         x = self.max_action * torch.tanh(self.l3(x))
         return x
-
 '''
+
 class Actor(nn.Module):
     def __init__(self, state_dim, action_dim, max_action):
         super(Actor, self).__init__()
@@ -162,7 +162,7 @@ class Actor(nn.Module):
         x = F.relu(self.l4(x))
         x = self.max_action * torch.tanh(self.l5(x))
         return x
-'''
+
 class Critic(nn.Module):
     def __init__(self, state_dim, action_dim):
         super(Critic, self).__init__()
