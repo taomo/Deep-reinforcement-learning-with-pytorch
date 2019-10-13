@@ -35,7 +35,7 @@ device = 'cuda' if torch.cuda.is_available() else 'cpu'
 parser = argparse.ArgumentParser()
 
 parser.add_argument('--mode', default='train', type=str) # mode = 'train' or 'test'
-parser.add_argument("--env_name", default="VibrationEnv-v0")  # OpenAI gym environment name  VibrationEnv  Pendulum
+parser.add_argument("--env_name", default="Pendulum-v0")  # OpenAI gym environment name  VibrationEnv  Pendulum
 parser.add_argument('--tau',  default=0.005, type=float) # target smoothing coefficient
 parser.add_argument('--target_update_interval', default=1, type=int)
 parser.add_argument('--gradient_steps', default=1, type=int)
@@ -258,7 +258,7 @@ class SAC():
             print("Training ... {} ".format(self.num_training))
         s = torch.tensor([t.s for t in self.replay_buffer]).float().to(device)
         a = torch.tensor([t.a for t in self.replay_buffer]).to(device)
-        # r = torch.tensor([t.r for t in self.replay_buffer]).to(device)
+        r = torch.tensor([t.r for t in self.replay_buffer]).to(device)
         s_ = torch.tensor([t.s_ for t in self.replay_buffer]).float().to(device)
         d = torch.tensor([t.d for t in self.replay_buffer]).float().to(device)
 
@@ -269,10 +269,10 @@ class SAC():
         # r = torch.tensor(r).float().to(device)
 
 
-        r = [t.r for t in self.replay_buffer]
-        scaler = MinMaxScaler(feature_range=(0, 1))
-        r = scaler.fit_transform(r)  # 归一化奖励
-        r = torch.tensor(r).float().to(device)
+        # r = [t.r for t in self.replay_buffer]
+        # scaler = MinMaxScaler(feature_range=(0, 1))
+        # r = scaler.fit_transform(r)  # 归一化奖励
+        # r = torch.tensor(r).float().to(device)
 
 
         for _ in range(args.gradient_steps):
@@ -433,7 +433,7 @@ def main():
         # ep_r = 0
         for i in range(args.iteration):
             state = env.reset()
-            for t in range(500):  # 200
+            for t in range(200):  # 200
                 action = agent.select_action(state)
                 # print(type(action))
                 next_state, reward, done, info = env.step(np.float32(action))
@@ -445,7 +445,7 @@ def main():
                     agent.update()
 
                 state = next_state
-                if done or t == 499:  # 199
+                if done or t == 199:  # 199
                     if i % 10 == 0:
                         if args.env_name == 'VibrationEnv-v0':
                             print("Ep_i {}, the ep_r is {}, the t is {}, NoiseAmplitude: {}, VibrationAmplitude: {}".format(i, ep_r, t, info['NoiseAmplitude'], info['VibrationAmplitude'] ))
